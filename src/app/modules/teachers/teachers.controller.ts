@@ -6,7 +6,15 @@ import { Request, Response } from "express";
 
 const createTeacher = catchAsync(async (req: Request, res: Response) => {
   console.log("Teacher add request: ", req.body);
-  const result = await TeacherServices.createTeacherDB(req.body);
+
+
+  const payload = { ...req.body };
+  if (typeof payload.subject === "string") {
+    payload.subject = JSON.parse(payload.subject);
+  }
+
+  const result = await TeacherServices.createTeacherDB(payload, req.file);
+
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -15,7 +23,6 @@ const createTeacher = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Get All
 const getAllTeachers = catchAsync(async (req: Request, res: Response) => {
   const result = await TeacherServices.getAllTeachersDB();
   sendResponse(res, {
@@ -26,7 +33,7 @@ const getAllTeachers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Get Single
+
 const getSingleTeacher = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
   const result = await TeacherServices.getSingleTeacherDB(id);
@@ -38,10 +45,21 @@ const getSingleTeacher = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Update
+
 const updateTeacher = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
-  const result = await TeacherServices.updateTeacherDB(id, req.body);
+
+  const payload = { ...req.body };
+  if (typeof payload.subject === "string") {
+    payload.subject = JSON.parse(payload.subject);
+  }
+
+  const result = await TeacherServices.updateTeacherDB(
+    id,
+    payload,
+    req.file
+  );
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -50,7 +68,7 @@ const updateTeacher = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Soft‑Delete
+
 const deleteTeacher = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
   const result = await TeacherServices.DeleteSingleTeacherDB(id);

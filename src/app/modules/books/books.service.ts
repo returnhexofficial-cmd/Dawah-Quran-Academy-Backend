@@ -1,6 +1,12 @@
 // services/books.service.ts
 import { IBook } from "./books.interface";
 import { Book } from "./books.model";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../../utils/uploadToCloudinary";
+import ApiError from "../../utils/AppError";
+import httpStatus from "http-status";
 
 const getAllBooksDB = async () => {
   return await Book.find({ isDeleted: false });
@@ -14,24 +20,52 @@ const getSingleBookDB = async (id: string) => {
   return book;
 };
 
-const createBookDB = async (data: IBook) => {
-  const exists = await Book.findOne({ title: data.title });
-  if (exists) {
-    throw new Error("A book with this title already exists!");
+const createBookDB = async (
+  payload: IBook,
+  file?: Express.Multer.File
+) => {
+
+  if (file) {
+    const uploadResult = await uploadToCloudinary(file.buffer, "books");
+
+    payload.cover = uploadResult.secure_url;
+    payload.coverPublicId = uploadResult.public_id;
   }
-  return Book.create(data);
+
+  const result = await Book.create(payload);
+
+  return result;
 };
 
-const updateBookDB = async (id: string, data: Partial<IBook>) => {
-  const updated = await Book.findOneAndUpdate(
-    { _id: id, isDeleted: false },
-    { $set: data },
-    { new: true }
-  );
-  if (!updated) {
-    throw new Error("Unable to update: book not found or deleted!");
+const updateBookDB = async (
+  id: string,
+  payload: Partial<IBook>,
+  file?: Express.Multer.File
+) => {
+  const isBookExists = await Book.findById(id);
+
+  if (!isBookExists) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Book Not Found!");
   }
-  return updated;
+
+  if (file) {
+
+    if (isBookExists.coverPublicId) {
+      await deleteFromCloudinary(isBookExists.coverPublicId);
+    }
+
+    const uploadResult = await uploadToCloudinary(file.buffer, "books");
+
+    payload.cover = uploadResult.secure_url;
+    payload.coverPublicId = uploadResult.public_id;
+  }
+
+  const result = await Book.findByIdAndUpdate(id, payload, {
+    new: true,
+    runValidators: true,
+  });
+
+  return result;
 };
 
 const softDeleteBookDB = async (id: string) => {

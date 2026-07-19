@@ -5,11 +5,20 @@ import sendResponse from "../../utils/SendResponse";
 import { BooksServices } from "./books.service";
 
 const createBook = catchAsync(async (req: Request, res: Response) => {
-  const result = await BooksServices.createBookDB(req.body);
+
+  const payload = {
+    ...req.body,
+  };
+
+  const result = await BooksServices.createBookDB(
+    payload,
+    req.file
+  );
+
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: "Book added successfully",
+    message: "Book created successfully",
     data: result,
   });
 });
@@ -37,12 +46,17 @@ const getSingleBooks = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateBooks = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await BooksServices.updateBookDB(id, req.body);
+
+  const result = await BooksServices.updateBookDB(
+    req.params.id,
+    req.body,
+    req.file
+  );
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Books updated successfully",
+    message: "Book updated successfully",
     data: result,
   });
 });
