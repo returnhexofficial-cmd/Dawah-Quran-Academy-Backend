@@ -5,7 +5,14 @@ import sendResponse from "../../utils/SendResponse";
 import { CourseServices } from "./courses.service";
 
 const createCourse = catchAsync(async (req: Request, res: Response) => {
-  const result = await CourseServices.createCourseDB(req.body);
+  const payload = {
+    ...req.body,
+    fee: Number(req.body.fee),
+    details: req.body.details ? JSON.parse(req.body.details) : [],
+  };
+
+  const result = await CourseServices.createCourseDB(payload, req.file);
+
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -13,6 +20,7 @@ const createCourse = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
 const getAllCourses = catchAsync(async (req: Request, res: Response) => {
   const result = await CourseServices.getAllCoursesDB();
   sendResponse(res, {
@@ -37,15 +45,20 @@ const getSingleCourses = catchAsync(async (req: Request, res: Response) => {
 
 const updateCourses = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await CourseServices.updateCourseDB(id, req.body);
+  const payload = {
+    ...req.body,
+    ...(req.body.fee && { fee: Number(req.body.fee) }),
+    ...(req.body.details && { details: JSON.parse(req.body.details) }),
+  };
+
+  const result = await CourseServices.updateCourseDB(id, payload, req.file);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Books updated successfully",
+    message: "Course updated successfully",
     data: result,
   });
 });
-
 const deleteCourse = catchAsync(async (req: Request, res: Response) => {
   const result = await CourseServices.softDeleteCourseDB(req.params.id);
   sendResponse(res, {

@@ -1,9 +1,14 @@
 import { Course } from "./courses.model";
 import { ICourse } from "./courses.interface";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../../utils/uploadToCloudinary";
+import ApiError from "../../utils/AppError";
+import httpStatus from "http-status";
 
 const getAllCoursesDB = async () => {
-  const result = Course.find({ isDeleted: false });
-  return result;
+  return await Course.find({ isDeleted: false });
 };
 
 const getSingleCourseDB = async (id: string) => {
@@ -14,24 +19,52 @@ const getSingleCourseDB = async (id: string) => {
   return course;
 };
 
-const createCourseDB = async (data: ICourse) => {
-  const exists = await Course.findOne({ name: data.name });
+const createCourseDB = async (
+  payload: Partial<ICourse>,
+  file?: Express.Multer.File
+) => {
+  const exists = await Course.findOne({ name: payload.name });
   if (exists) {
     throw new Error("A course with this title already exists!");
   }
-  return Course.create(data);
+
+  if (file) {
+    const uploadResult = await uploadToCloudinary(file.buffer, "courses");
+    payload.img = uploadResult.secure_url;
+    payload.coverPublicId = uploadResult.public_id;
+  }
+
+  return await Course.create(payload);
 };
 
-const updateCourseDB = async (id: string, data: Partial<ICourse>) => {
-  const updated = await Course.findOneAndUpdate(
+const updateCourseDB = async (
+  id: string,
+  payload: Partial<ICourse>,
+  file?: Express.Multer.File
+) => {
+  const isCourseExists = await Course.findById(id);
+  if (!isCourseExists) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Course Not Found!");
+  }
+
+  if (file) {
+    if (isCourseExists.coverPublicId) {
+      await deleteFromCloudinary(isCourseExists.coverPublicId);
+    }
+    const uploadResult = await uploadToCloudinary(file.buffer, "courses");
+    payload.img = uploadResult.secure_url;
+    payload.coverPublicId = uploadResult.public_id;
+  }
+
+  const result = await Course.findOneAndUpdate(
     { _id: id, isDeleted: false },
-    { $set: data },
-    { new: true }
+    { $set: payload },
+    { new: true, runValidators: true }
   );
-  if (!updated) {
+  if (!result) {
     throw new Error("Unable to update: course not found or deleted!");
   }
-  return updated;
+  return result;
 };
 
 const softDeleteCourseDB = async (id: string) => {
