@@ -26,7 +26,27 @@ const getAllMails = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createMailContact = async (req: Request, res: Response) => {
+  try {
+    const result = await MailServices.createMailContact(req.body);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to send mail",
+    });
+  }
+};
+
 export const MailController = {
   createMail,
   getAllMails,
+  createMailContact
 };

@@ -1,8 +1,11 @@
 import ApiError from "../../utils/AppError";
 import sendEmail from "../../utils/sendEmail";
+import sendEmailContact from "../../utils/sendEmailContact";
 import { Student } from "../students/student.model";
+import { IMailContact } from "./mails.interface";
 import { Mail } from "./mails.model";
 import httpStatus from "http-status";
+import nodemailer from "nodemailer";
 
 const getAllMails = async () => {
   const result = await Mail.find().sort({ createdAt: -1 });
@@ -50,7 +53,21 @@ const createMail = async (subject: string, message: string) => {
   };
 };
 
+
+const createMailContact = async (payload: IMailContact) => {
+
+  await sendEmailContact(payload);
+
+
+  return {
+    success: true,
+    message: "Mail sent successfully",
+  };
+
+};
+
 export const MailServices = {
   getAllMails,
   createMail,
+  createMailContact
 };

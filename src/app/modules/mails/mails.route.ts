@@ -7,5 +7,6 @@ const router = express.Router();
 
 router.get("/", auth(USER_ROLE.admin), MailController.getAllMails);
 router.post("/", auth(USER_ROLE.admin), MailController.createMail);
+router.post("/contact", MailController.createMailContact);
 
 export const mailRouter = router;
