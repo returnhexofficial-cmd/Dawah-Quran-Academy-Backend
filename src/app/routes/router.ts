@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authRoute } from "../modules/auth/auth.route";
 import { BookRouter } from "../modules/books/books.route";
+import { classRouter } from "../modules/classes/classes.route";
 import { courseRouter } from "../modules/courses/courses.route";
 import { noticeRouter } from "../modules/notice/notice.route";
 import { reviewRouter } from "../modules/reviews/reviews.route";
@@ -28,6 +29,10 @@ const moduleRoutes = [
   {
     path: "/notices",
     route: noticeRouter,
+  },
+  {
+    path: "/classes",
+    route: classRouter,
   },
   {
     path: "/users",
