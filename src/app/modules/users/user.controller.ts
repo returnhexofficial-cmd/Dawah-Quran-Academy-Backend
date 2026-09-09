@@ -44,7 +44,11 @@ const getOneUser: RequestHandler = catchAsync(
 const updateOneUser: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const result = await UserServices.updateSingleUserToDB(id, req.body);
+    const result = await UserServices.updateSingleUserToDB(
+      id,
+      req.body,
+      req.file
+    );
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,

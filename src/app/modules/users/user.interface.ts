@@ -5,6 +5,7 @@ export interface IUser {
   email: string
   password: string
   image?: string
+  imagePublicId?: string
   role: "admin" | "student"
   status: 'approved' | 'blocked'
   isDeleted: boolean

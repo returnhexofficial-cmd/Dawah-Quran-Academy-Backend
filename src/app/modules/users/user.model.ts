@@ -20,6 +20,9 @@ const userSchema = new Schema<IUser>(
     image: {
       type: String,
     },
+    imagePublicId: {
+      type: String,
+    },
     role: {
       type: String,
       enum: ["admin", "student"],

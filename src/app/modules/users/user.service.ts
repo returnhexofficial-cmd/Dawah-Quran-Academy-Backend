@@ -5,6 +5,10 @@ import httpStatus from "http-status";
 import bcrypt from "bcrypt";
 import { Student } from "../students/student.model";
 import { config } from "../../config";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../../utils/uploadToCloudinary";
 
 const createUserToDB = async (payload: IUser) => {
   const existingUser = await User.findOne({ email: payload.email });
@@ -39,9 +43,24 @@ const getSingleUserFromDB = async (id: string) => {
   return result;
 };
 
-const updateSingleUserToDB = async (id: string, payload: Partial<IUser>) => {
+const updateSingleUserToDB = async (
+  id: string,
+  payload: Partial<IUser>,
+  file?: Express.Multer.File
+) => {
   const isUserExists = await User.findById(id, { isDeleted: false });
   if (!isUserExists) throw new ApiError(httpStatus.CONFLICT, "User Not Found!");
+
+  if (file) {
+    if (isUserExists.imagePublicId) {
+      await deleteFromCloudinary(isUserExists.imagePublicId);
+    }
+
+    const uploadResult = await uploadToCloudinary(file.buffer, "users");
+    payload.image = uploadResult.secure_url;
+    payload.imagePublicId = uploadResult.public_id;
+  }
+
   const result = await User.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
