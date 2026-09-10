@@ -13,6 +13,8 @@ router.post(
 
 router.post("/refresh-token", AuthController.refreshToken);
 
+router.post("/logout", AuthController.logout);
+
 router.patch("/forget-password", AuthController.forgetPassword);
 
 router.post("/reset-password", AuthController.resetPassword);

@@ -1,21 +1,20 @@
 import { Request, RequestHandler, Response } from "express";
 import httpStatus from "http-status";
-import { config } from "../../config";
 import { catchAsync } from "../../utils/CatchAsync";
 import sendResponse from "../../utils/SendResponse";
 import { AuthServices } from "./auth.service";
+import {
+  clearRefreshTokenCookieOptions,
+  REFRESH_TOKEN_COOKIE,
+  refreshTokenCookieOptions,
+} from "./auth.utils";
 
 export const loginUser: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
     const result = await AuthServices.loginUser(req.body);
     const { accessToken, refreshToken, userRole, id } = result;
 
-    res.cookie("refreshToken", refreshToken, {
-      secure: config.node_env === "production",
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24 * 365,
-    });
+    res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, refreshTokenCookieOptions);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -40,12 +39,30 @@ const changePassword: RequestHandler = catchAsync(
 
 const refreshToken: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
-    const result = await AuthServices.refreshToken(req.cookies.refreshToken);
+    const result = await AuthServices.refreshToken(
+      req.cookies?.[REFRESH_TOKEN_COOKIE]
+    );
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
       message: "Token refreshed Successfully",
       data: result,
+    });
+  }
+);
+
+/**
+ * Deliberately unauthenticated: logging out has to work even when the access
+ * token is already expired, and its only job is to drop the refresh cookie.
+ */
+const logout: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    res.clearCookie(REFRESH_TOKEN_COOKIE, clearRefreshTokenCookieOptions);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Logged out successfully",
+      data: null,
     });
   }
 );
@@ -79,6 +96,7 @@ export const AuthController = {
   loginUser,
   changePassword,
   refreshToken,
+  logout,
   forgetPassword,
   resetPassword,
 };

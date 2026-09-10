@@ -7,7 +7,7 @@ import { User } from "../users/user.model";
 import ApiError from "../../utils/AppError";
 import sendEmail from "../../utils/sendEmail";
 import { IAuth } from "./auth.interface";
-import { createToken, verifyToken } from "./auth.utils";
+import { buildJwtPayload, createToken, verifyToken } from "./auth.utils";
 
 export const loginUser = async (payload: IAuth) => {
   const user = await User.findOne({ email: payload.email }).select("+password");
@@ -23,13 +23,7 @@ export const loginUser = async (payload: IAuth) => {
   );
   if (!isPasswordMatched)
     throw new ApiError(httpStatus.FORBIDDEN, "Password did not matched!");
-  const jwtPayload = {
-    userId: user._id.toString(),
-    email: user.email,
-    role: user.role,
-    status: user.status,
-    name: user.name,
-  };
+  const jwtPayload = buildJwtPayload(user);
 
   const accessToken = createToken(
     jwtPayload,
@@ -110,18 +104,16 @@ const refreshToken = async (token: string) => {
   if (user.status === "blocked")
     throw new ApiError(httpStatus.NOT_FOUND, "User is blocked");
 
-  const jwtPayload = {
-    userId: user._id.toString(),
-    role: user.role,
-  };
+  // Same claims as login, so a refresh never strips name/email/status.
+  const jwtPayload = buildJwtPayload(user);
 
-  const newAccessToken = createToken(
+  const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
     Number(config.jwt_access_expiresIn)
   );
 
-  return { newAccessToken: newAccessToken };
+  return { accessToken };
 };
 
 const forgetPassword = async (email: string) => {
@@ -143,7 +135,7 @@ const forgetPassword = async (email: string) => {
     600
   );
 
-  const resetUILink = `${process.env.RESET_PASS_UI_LINK}?id=${user?._id}&token=${resetPassToken}`;
+  const resetUILink = `${process.env.CLIENT_URL}/reset-password?id=${user?._id}&token=${resetPassToken}`;
   const resetUI = createEmailHtml(user?.name, resetUILink);
   sendEmail(user?.email, "Reset your password", resetUI);
 };

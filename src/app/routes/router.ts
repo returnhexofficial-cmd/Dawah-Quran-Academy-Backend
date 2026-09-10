@@ -9,6 +9,7 @@ import { StudentRouter } from "../modules/students/student.route";
 import { teacherRouter } from "../modules/teachers/teachers.route";
 import { userRouter } from "../modules/users/user.route";
 import { mailRouter } from "../modules/mails/mails.route";
+import { siteConfigRouter } from "../modules/siteConfig/siteConfig.route";
 
 const router = Router();
 
@@ -53,6 +54,10 @@ const moduleRoutes = [
   {
     path: "/auth",
     route: authRoute,
+  },
+  {
+    path: "/site-config",
+    route: siteConfigRouter,
   },
 ];
 
